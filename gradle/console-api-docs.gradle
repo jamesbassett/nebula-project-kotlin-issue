@@ -1,0 +1,91 @@
+buildscript {
+    ext {
+        springFoxVersion = '2.5.0'
+        swagger2markupVersion = '1.0.0'
+    }
+    repositories {
+        maven {
+            url "https://nexus.ops.console.com.au/repository/maven-public"
+        }
+    }
+    dependencies {
+        classpath "org.asciidoctor:asciidoctor-gradle-plugin:1.5.3"
+        classpath "io.github.swagger2markup:swagger2markup-spring-restdocs-ext:${swagger2markupVersion}"
+        classpath "io.github.swagger2markup:swagger2markup-gradle-plugin:${swagger2markupVersion}"
+    }
+}
+
+apply plugin: org.asciidoctor.gradle.AsciidoctorPlugin
+apply plugin: io.github.swagger2markup.Swagger2MarkupPlugin
+
+
+dependencies {
+    // Swagger
+    compile "io.springfox:springfox-swagger-ui:${springFoxVersion}"
+    compile "io.springfox:springfox-swagger2:${springFoxVersion}"
+    compile "io.springfox:springfox-staticdocs:${springFoxVersion}"
+    compile "io.springfox:springfox-bean-validators:${springFoxVersion}"
+}
+
+
+ext {
+    asciiDocOutputDir = file("${buildDir}/asciidoc")
+    swaggerOutputDir = file("${buildDir}/swagger")
+    snippetsOutputDir = file("${buildDir}/asciidoc/snippets")
+    operationsOutputDir = file("${buildDir}/asciidoc/operations")
+    definitionsOutputDir = file("${buildDir}/asciidoc/definitions")
+
+    externalAsciiDocOutputDir = file("${buildDir}/asciidoc/external")
+    externalSnippetsOutputDir = file("${buildDir}/asciidoc/external/snippets")
+    externalOperationsOutputDir = file("${buildDir}/asciidoc/external/operations")
+    externalDefinitionsOutputDir = file("${buildDir}/asciidoc/external/definitions")
+}
+
+convertSwagger2markup {
+    dependsOn "integrationTest"
+    swaggerInput "${swaggerOutputDir}/api-docs.json"
+    outputDir asciiDocOutputDir
+    config = [
+            'swagger2markup.pathsGroupedBy' : 'TAGS',
+            'swagger2markup.separatedDefinitionsEnabled': true,
+            'swagger2markup.separatedOperationsEnabled': true,
+            'swagger2markup.separatedOperationsFolder' : operationsOutputDir,
+            'swagger2markup.separatedDefinitionsFolder':  definitionsOutputDir,
+            'swagger2markup.extensions.springRestDocs.snippetBaseUri': uri(snippetsOutputDir).toString()]
+}
+
+import io.github.swagger2markup.tasks.Swagger2MarkupTask
+task convertExternalSwagger2markup(type: Swagger2MarkupTask) {
+    outputDir externalAsciiDocOutputDir
+    config = [
+            'swagger2markup.pathsGroupedBy' : 'TAGS',
+            'swagger2markup.separatedDefinitionsEnabled': true,
+            'swagger2markup.separatedOperationsEnabled': true,
+            'swagger2markup.separatedOperationsFolder' : externalOperationsOutputDir,
+            'swagger2markup.separatedDefinitionsFolder':  externalDefinitionsOutputDir,
+            'swagger2markup.extensions.springRestDocs.snippetBaseUri': uri(externalSnippetsOutputDir).toString()]
+}
+convertExternalSwagger2markup.onlyIf { convertExternalSwagger2markup.swaggerInput != null}
+
+asciidoctor {
+    dependsOn convertExternalSwagger2markup
+    dependsOn convertSwagger2markup
+    sources {
+        include 'index.adoc'
+    }
+    backends = ['html5']
+    attributes = [
+            doctype: 'book',
+            toc: 'left',
+            toclevels: '3',
+            numbered: '',
+            sectlinks: '',
+            sectanchors: '',
+            hardbreaks: '',
+            generated: asciiDocOutputDir
+    ]
+}
+
+asciidoctorj {
+    noDefaultRepositories = true
+}

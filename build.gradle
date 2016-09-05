@@ -1,0 +1,17 @@
+allprojects {
+    group 'com.example'
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = "3.0"
+    }
+}
+
+subprojects {
+
+    repositories {
+        jcenter()
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'idea'
+}
