@@ -6,7 +6,7 @@ import org.junit.Test
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.Assert.assertThat
 
-class GreetingServiceTest {
+class GreetingServiceIntegTest {
 
     private lateinit var service: GreetingService
 
