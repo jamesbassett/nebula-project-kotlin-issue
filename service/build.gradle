@@ -1,14 +1,4 @@
-buildscript {
-
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.netflix.nebula:nebula-project-plugin:3.3.0'
-    }
-}
-
+apply plugin: 'nebula.kotlin'
 apply plugin: 'nebula.integtest'
 
 dependencies {
